@@ -30,7 +30,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_dotenv: ^5.0.2
+
+  # for .env file but currently not used due to errors
+  # flutter_dotenv: ^5.0.2
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -61,8 +63,8 @@ flutter:
 
   # env section to keep secrets out of the codebase
   # Good place to put your API and DB keys
-  assets:
-    - .env
+  #assets:
+  #  - .env
 
   # To add assets to your application, add an assets section, like this:
   # assets:
