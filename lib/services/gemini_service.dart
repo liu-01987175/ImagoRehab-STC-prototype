@@ -48,4 +48,34 @@ class GeminiService {
 
     return text;
   }
+
+  // Encourage prompt, adds the current weekday to prompt, we can specify by time like morning, afternoon, evening
+  /// Fetches an encouraging message tailored to the current weekday without the intro.
+  Future<String> getEncouragingMessage() async {
+    final dayName = _weekdayName(DateTime.now().weekday);
+    final prompt =
+        'Gemini: give me an encouraging message for an occupational therapist to start a $dayName morning, and respond with only the message itself (no introduction or preamble).';
+    return generateContent(prompt);
+  }
+
+  String _weekdayName(int weekday) {
+    switch (weekday) {
+      case DateTime.monday:
+        return 'Monday';
+      case DateTime.tuesday:
+        return 'Tuesday';
+      case DateTime.wednesday:
+        return 'Wednesday';
+      case DateTime.thursday:
+        return 'Thursday';
+      case DateTime.friday:
+        return 'Friday';
+      case DateTime.saturday:
+        return 'Saturday';
+      case DateTime.sunday:
+        return 'Sunday';
+      default:
+        return '';
+    }
+  }
 }
