@@ -1,50 +1,59 @@
-// This screen serves as a prompt for the AI to generate a home action plan based
-// on the patient's data.
+// lib/screens/prompt_screen.dart
+
 import 'package:flutter/material.dart';
 import '../services/gemini_service.dart';
+import '../services/mongo_service.dart';
+import 'result_screen.dart';
 
 class PromptScreen extends StatefulWidget {
-  static const routeName = '/prompt';
+  static const String routeName = '/prompt';
+  const PromptScreen({Key? key}) : super(key: key);
+
   @override
   _PromptScreenState createState() => _PromptScreenState();
 }
 
-final GeminiService _geminiService = GeminiService(
-  'AIzaSyDYn5DS21gpgHVIn2ar0VMxT65j4-AljB4',
-);
-
 class _PromptScreenState extends State<PromptScreen> {
-  final _promptCtrl = TextEditingController();
+  final GeminiService _gemini = GeminiService();
+  final MongoService _mongo = MongoService();
+  final TextEditingController _ctrl = TextEditingController();
   bool _loading = false;
 
   @override
   void dispose() {
-    _promptCtrl.dispose();
+    _ctrl.dispose();
     super.dispose();
   }
 
-  // Method to call GeminiService and passes it to the result_screen
-  void _generate() async {
-    setState(() {
-      _loading = true;
-    });
+  Future<void> _generateAndSave() async {
+    final prompt = _ctrl.text.trim();
+    if (prompt.isEmpty) return;
 
+    setState(() => _loading = true);
     try {
-      final response = await _geminiService.generateContent(_promptCtrl.text);
-      Navigator.pushNamed(context, '/result', arguments: response);
+      // 1. Call Gemini
+      final planText = await _gemini.generateContent(prompt);
+
+      // 2. Save into MongoDB
+      final savedPlan = await _mongo.createPlan(prompt, planText);
+
+      // 3. Navigate, passing the saved text
+      Navigator.pushNamed(
+        context,
+        ResultScreen.routeName,
+        arguments: savedPlan.plan,
+      );
     } catch (e) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
-      setState(() {
-        _loading = false;
-      });
+      setState(() => _loading = false);
     }
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext ctx) {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -66,7 +75,7 @@ class _PromptScreenState extends State<PromptScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
-                    controller: _promptCtrl,
+                    controller: _ctrl,
                     maxLines: 5,
                     style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
@@ -86,7 +95,7 @@ class _PromptScreenState extends State<PromptScreen> {
                       : SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: _generate,
+                          onPressed: _generateAndSave,
                           child: const Text('Generate Plan'),
                         ),
                       ),
@@ -94,7 +103,7 @@ class _PromptScreenState extends State<PromptScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () => Navigator.pop(ctx),
                       child: const Text('Back to Home'),
                     ),
                   ),

@@ -4,56 +4,46 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class GeminiService {
-  /// URL of your local backend proxy
-  static const _proxyUrl = 'http://localhost:3000/generate-content';
+  static const String baseUrl = 'http://localhost:3000';
+  const GeminiService();
 
-  final String apiKey; // no longer used for auth, but you can remove if unused
-
-  GeminiService(this.apiKey);
-
-  /// Sends [prompt] to your Express proxy, which in turn calls Gemini Flash-Lite.
-  /// Returns the generated text from the first candidate’s parts[0].text.
   Future<String> generateContent(String prompt) async {
-    final response = await http.post(
-      Uri.parse(_proxyUrl),
+    final uri = Uri.parse('$baseUrl/generate-content');
+    final resp = await http.post(
+      uri,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'prompt': prompt}),
     );
-
-    if (response.statusCode != 200) {
-      throw Exception(
-        'Failed to generate content: ${response.statusCode} ${response.body}',
-      );
+    if (resp.statusCode != 200) {
+      throw Exception('Error ${resp.statusCode}: ${resp.body}');
     }
 
-    // Decode the JSON response into a Map
-    final Map<String, dynamic> data =
-        jsonDecode(response.body) as Map<String, dynamic>;
+    final Map<String, dynamic> data = jsonDecode(resp.body);
 
-    // Extract the 'candidates' array
+    // 1) Get the candidates array
     final List<dynamic>? candidates = data['candidates'] as List<dynamic>?;
     if (candidates == null || candidates.isEmpty) {
-      throw Exception('No candidates returned from Gemini');
+      throw Exception('No candidates in response');
     }
 
-    // Take the first candidate’s content map
-    final Map<String, dynamic>? content =
+    // 2) First candidate’s content object
+    final content =
         (candidates[0] as Map<String, dynamic>)['content']
             as Map<String, dynamic>?;
     if (content == null) {
-      throw Exception('Missing content in Gemini response');
+      throw Exception('Missing content in candidate');
     }
 
-    // Extract the 'parts' array inside content
+    // 3) content.parts → array of parts
     final List<dynamic>? parts = content['parts'] as List<dynamic>?;
     if (parts == null || parts.isEmpty) {
-      throw Exception('No content parts returned from Gemini');
+      throw Exception('No parts in content');
     }
 
-    // Finally, extract the 'text' string from the first part
+    // 4) The actual text is parts[0]['text']
     final String? text = (parts[0] as Map<String, dynamic>)['text'] as String?;
     if (text == null) {
-      throw Exception('Missing text in Gemini response');
+      throw Exception('Missing text in parts[0]');
     }
 
     return text;
