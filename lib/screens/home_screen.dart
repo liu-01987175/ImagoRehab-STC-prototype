@@ -1,6 +1,8 @@
 // lib/screens/home_screen.dart
+
 import 'package:flutter/material.dart';
 import '../services/gemini_service.dart';
+import 'sit_to_stand_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   static const routeName = '/';
@@ -35,6 +37,8 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 24),
+
+                  // Existing buttons
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -59,9 +63,24 @@ class HomeScreen extends StatelessWidget {
                       child: const Text('View Result'),
                     ),
                   ),
+
+                  // NEW: Sit-to-Stand Test button
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed:
+                          () => Navigator.pushNamed(
+                            context,
+                            SitToStandScreen.routeName,
+                          ),
+                      child: const Text('Start Sit-to-Stand Test'),
+                    ),
+                  ),
+
+                  // Encouragement message
                   const SizedBox(height: 24),
                   FutureBuilder<String>(
-                    // this calls the encouragement message that we made in gemini_service.dart
                     future: _geminiService.getEncouragingMessage(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
